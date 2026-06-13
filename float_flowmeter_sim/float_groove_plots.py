@@ -64,17 +64,17 @@ for r, (name, (sp, ux2, uy2, fmT, soT)) in enumerate(rows):
     az.set_title(f"{name} — 前锥放大", fontproperties=zh, fontsize=12)
     az.set_xlim(-1, 8); az.set_ylim(1, 9)
     if r == 1:
-        az.annotate("槽内驻涡\n(固定分离线)", (3.1, 3.0), (4.5, 6.5),
-                    fontproperties=zh, fontsize=10, color="w",
+        az.annotate("槽内仅局部小驻涡\n(低速区,不影响主节流)", (3.1, 3.0), (4.3, 6.6),
+                    fontproperties=zh, fontsize=9.5, color="w",
                     arrowprops=dict(arrowstyle="->", color="w", lw=1.4))
     else:
-        az.annotate("锥面边界层\n随 Re 变化", (3.0, 4.0), (4.3, 7.0),
+        az.annotate("锥面附着流", (3.0, 4.0), (4.3, 7.0),
                     fontproperties=zh, fontsize=10, color="w",
                     arrowprops=dict(arrowstyle="->", color="w", lw=1.4))
 for ax in axes[1, :]:
     ax.set_xlabel("x [mm] (流动 →)", fontproperties=zh)
-fig1.suptitle("CFD A/B:光面锥 vs 前锥锐边环槽(LBM, Re≈%.0f,子午面 2D)" % float(D["Re_field"]),
-              fontproperties=zh, fontsize=14, fontweight="bold")
+fig1.suptitle("CFD A/B:光面锥 vs 前锥锐边环槽(LBM, Re≈%.0f,子午面 2D)— 两者流场基本一致" % float(D["Re_field"]),
+              fontproperties=zh, fontsize=13.5, fontweight="bold")
 fig1.tight_layout(rect=[0, 0, 1, 0.96])
 fig1.savefig(HERE + "/float_groove_cfd.png", dpi=140)
 print("saved float_groove_cfd.png")
@@ -111,40 +111,47 @@ def simulate(rho, mu, beta):
 
 fig2, (axL, axR) = plt.subplots(1, 2, figsize=(13.5, 5.2))
 
-# Left: Cd/Cdinf vs gap-Re from CFD (points) + fit
+# Left: Cd/Cdinf vs gap-Re from CFD (points) + fit -- both geometries overlap
 ReA = np.logspace(1.5, 4.6, 300)
-for name, beta, Re_c, dp_c, col in [
-        ("光面锥", bmin, D["sw_sm_Re"], D["sw_sm_dp"], "tab:red"),
-        ("带环槽", bgr, D["sw_gr_Re"], D["sw_gr_dp"], "tab:green")]:
+for name, beta, Re_c, dp_c, col, mk, ls, lw in [
+        ("光面锥(锐主边)", bmin, D["sw_sm_Re"], D["sw_sm_dp"], "tab:red", "o", "-", 3.2),
+        ("前锥加环槽",     bgr, D["sw_gr_Re"], D["sw_gr_dp"], "tab:green", "x", "--", 1.7)]:
     Re_c = np.asarray(Re_c); dp_c = np.asarray(dp_c)
     y = 1 / np.sqrt(dp_c); y = y / y.max()                       # CFD points (normalized)
-    axL.plot(Re_c, y, "o", color=col, ms=8)
+    axL.plot(Re_c, y, mk, color=col, ms=9, mew=2.2, zorder=4)
     axL.plot(ReA, (1 - beta / np.sqrt(ReA)) / (1 - beta / np.sqrt(ReA[-1])),
-             "-", color=col, lw=2, label=f"{name}  (β={beta:.2f})")
+             ls, color=col, lw=lw, label=f"{name}  (β={beta:.2f})")
 axL.set_xscale("log")
 axL.set_xlabel("环隙雷诺数 Re", fontproperties=zh)
 axL.set_ylabel("Cd / Cd∞ (归一化)", fontproperties=zh)
-axL.set_title("(左) CFD 测得的 Cd 下垂:槽越平→粘度免疫越好", fontproperties=zh, fontsize=12)
-axL.grid(True, which="both", alpha=0.3); axL.legend(prop=zh)
+axL.set_title("(左) CFD 测得的 Cd(Re):两种几何几乎完全重合", fontproperties=zh, fontsize=12)
+axL.text(0.05, 0.10, "ΔP 处处一致,Δβ<0.2%\n→ 槽未改变 Cd 下垂\nCd 由主节流口(锐边+窄环隙)决定,与前锥无关",
+         transform=axL.transAxes, fontproperties=zh, fontsize=9.0,
+         bbox=dict(boxstyle="round", fc="w", alpha=0.85))
+axL.grid(True, which="both", alpha=0.3); axL.legend(prop=zh, loc="lower right")
 
-# Right: reading error vs flow, water + coolant, both geometries
+# Right: reading error vs flow -- both geometries overlap
 sty = {"水 20°C": ("-", dict(rho=998., mu=1e-3)),
-       "冷却液/乙二醇": ("--", dict(rho=1040., mu=5e-3))}
-col = {"光面锥": "tab:red", "带环槽": "tab:green"}
+       "冷却液/乙二醇": (":", dict(rho=1040., mu=5e-3))}
+geom = [("光面锥(锐主边)", bmin, "tab:red", 3.2), ("前锥加环槽", bgr, "tab:green", 1.7)]
 for fl, (ls, p) in sty.items():
-    for name, beta in [("光面锥", bmin), ("带环槽", bgr)]:
+    for name, beta, c, lw in geom:
         flow, err = simulate(p["rho"], p["mu"], beta)
-        axR.plot(flow, err, ls, color=col[name], lw=2, label=f"{name} / {fl}")
+        axR.plot(flow, err, ls, color=c, lw=lw, label=f"{name} / {fl}")
 qb = np.linspace(1, 50, 200)
-axR.fill_between(qb, -(4 + 50 / qb), (4 + 50 / qb), color="gray", alpha=0.12)
+axR.fill_between(qb, -(4 + 50 / qb), (4 + 50 / qb), color="gray", alpha=0.12,
+                 label="datasheet 带 ±(4%MW+1%MEW)")
 axR.axhline(0, color="k", lw=0.8)
+axR.text(0.40, 0.55, "光面 vs 带槽\n两组曲线重合\n→ 精度无差异",
+         transform=axR.transAxes, fontproperties=zh, fontsize=10,
+         bbox=dict(boxstyle="round", fc="w", alpha=0.85))
 axR.set_xlabel("流量 [l/min]", fontproperties=zh)
 axR.set_ylabel("读数误差 [% of reading]", fontproperties=zh)
-axR.set_title("(右) 精度对比(单点 span 标定)", fontproperties=zh, fontsize=12)
-axR.set_ylim(-2, 10); axR.grid(True, alpha=0.3); axR.legend(prop=zh, fontsize=9)
+axR.set_title("(右) 精度对比(单点 span 标定):两者重合", fontproperties=zh, fontsize=12)
+axR.set_ylim(-2, 12); axR.grid(True, alpha=0.3); axR.legend(prop=zh, fontsize=8, loc="upper right")
 
-fig2.suptitle("环形锐边槽的收益:Cd 更平(粘度免疫)→ 低流量/高粘度精度更好",
-              fontproperties=zh, fontsize=14, fontweight="bold")
+fig2.suptitle("前锥环形锐边槽 A/B:在已有锐主边的浮子上,Cd 与精度基本不变(此处收益可忽略)",
+              fontproperties=zh, fontsize=13.5, fontweight="bold")
 fig2.tight_layout(rect=[0, 0, 1, 0.95])
 fig2.savefig(HERE + "/float_groove_accuracy.png", dpi=140)
 print("saved float_groove_accuracy.png")
