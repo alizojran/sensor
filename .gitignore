@@ -1,0 +1,4 @@
+# generated / regenerable artifacts
+*.npz
+*.log
+__pycache__/
