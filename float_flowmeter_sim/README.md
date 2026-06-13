@@ -37,9 +37,30 @@ Python 仿真不同流量、不同介质下的读数精度。
 - **粘度越大误差越大** —— 这正是"锐边/viscosity-immune 浮子"对水/乙二醇/冷却液
   混用场合至关重要的原因。
 
+## 4. CFD 流场(LBM)
+
+用格子玻尔兹曼法(D2Q9-BGK,纯 numpy)做了浮子在锥孔中的**子午面 2D** 流场
+(Re≈150,层流——正是粘性介质/低流量这一最关键工况):
+
+- **速度场+流线**:流体经可变环隙加速(峰值 ≈ **6.5× 入口速度**),在**锐边分离**,
+  尾部形成**回流涡**。
+- **涡量场**:剪切层从锐边规则脱落——**分离点被钉死在边缘**,不随 Re/粘度漂移,
+  这就是 viscosity-immune 的流体力学根源。
+- **压力场**:迎流面高压、环隙/尾部低压;前后**压差 ΔP** 正是顶起浮子的力
+  (对应 `ΔP·A_f = 弹簧力`)。
+
+> 说明:平面近似(非轴对称),用于展示流场拓扑与机理,非定量轴对称解。
+
 ## 运行
 
 ```bash
 pip install numpy matplotlib scipy
-python3 float_flowmeter_sim.py     # 打印数据表 + 生成 float_flowmeter_accuracy.png
+
+# 形状设计 + 精度仿真
+python3 float_flowmeter_sim.py      # 数据表 + float_flowmeter_accuracy.png
+# 浮子工程剖面图
+python3 float_drawing.py            # float_design_drawing.png
+# CFD:先解流场(约 7-8 min),再出图
+python3 float_cfd_lbm.py 16000      # -> cfd_field.npz
+python3 float_cfd_plot.py           # -> float_cfd_flowfield.png
 ```
