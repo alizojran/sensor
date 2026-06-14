@@ -30,20 +30,27 @@ axA.set_title(f"(A) 验证:管流 Poiseuille\n最大误差 {float(D['pois_err'])
               fontproperties=zh, fontsize=11)
 axA.grid(True, alpha=0.3); axA.legend(prop=zh)
 
-# ---- (B) Cd vs Re + beta ----
-ReA = np.logspace(1.6, 3.0, 200)
+# ---- (B) Cd vs Re + power-law sensitivity (refit from raw points) ----
+ReA = np.logspace(np.log10(45), np.log10(440), 200)
+
+
+def powfit(Re, cd):
+    p = np.polyfit(np.log(Re), np.log(cd), 1)
+    return p[0], float(np.exp(p[1]))           # exponent n, prefactor A
+
+
 for v in ORDER:
     Re = np.asarray(D[f"{v}_Re"], float); cd = np.asarray(D[f"{v}_Cd"], float)
-    if len(Re) == 0:
+    if len(Re) < 2:
         continue
-    b = float(D[f"{v}_beta"]); a = float(D[f"{v}_Cdinf"])
-    axB.plot(Re, cd, "o", color=COL[v], ms=8)
-    axB.plot(ReA, a * (1 + b / np.sqrt(ReA)), "-", color=COL[v], lw=2,
-             label=f"{NAME[v]}  Cd∞={a:.1f}, β={b:.2f}")
-axB.set_xscale("log")
+    n, A = powfit(Re, cd)
+    axB.plot(Re, cd, "o", color=COL[v], ms=8, zorder=4)
+    axB.plot(ReA, A * ReA ** n, "-", color=COL[v], lw=2,
+             label=f"{NAME[v]}  Cd∝Re^{n:.2f}")
+axB.set_xscale("log"); axB.set_yscale("log")
 axB.set_xlabel("浮子雷诺数 Re", fontproperties=zh)
 axB.set_ylabel("阻力系数 Cd", fontproperties=zh)
-axB.set_title("(B) 阻力 Cd(Re):斜率=β(越小越粘度免疫)", fontproperties=zh, fontsize=11)
+axB.set_title("(B) Cd(Re):cup6≈cup2≈blunt(凹坑无影响);圆头较低", fontproperties=zh, fontsize=11)
 axB.grid(True, which="both", alpha=0.3); axB.legend(prop=zh, fontsize=8)
 
 # ---- (C) cup6 axisymmetric flow field (mirrored) ----
