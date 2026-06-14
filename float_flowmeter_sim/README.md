@@ -94,6 +94,32 @@ Python 仿真不同流量、不同介质下的读数精度。
   有意义的是 **β 与相对排序**,不是绝对值。
 - 2D 子午面、低 Re 层流近似;水的高 Re 端为外推。
 
+## 7. 凹坑尺寸怎么选(深度 & 直径)
+
+**方法基础**:前向空腔流动由**深径比 d/Dp** 主导(浅腔剪切层拍打 vs 深腔稳定驻涡;
+Charwat/Rossiter/Gharib-Roshko),阻力量级查 Hoerner《Fluid-Dynamic Drag》(空心杯
+Cd≈1.4),脉动频率用 Rossiter 公式校核共振。CFD 参数扫描(Re=150,时间分辨阻力)结果:
+
+| d (Ø8) | d/Dp | Cd | 脉动 RMS% |
+|---|---|---|---|
+| 1 | 0.12 | 12.9 | 40% |
+| 2(原设计) | 0.25 | 13.9 | **211%** |
+| 3 | 0.38 | 13.6 | 228% |
+| 4 | 0.50 | 13.4 | 127% |
+| **6** | **0.75** | 13.0 | **17%** |
+
+- **脉动由 d/Dp 主导且非单调**:最猛在 **d/Dp≈0.25–0.5(>200%)**,深到 **d/Dp≥0.75 骤降到 17%**
+  (稳定驻涡);阻力 Cd 几乎不变(~13)。两组扫描(变深/变径)在 d/Dp 上基本重合。
+- **直径**:固定深度增大坑径会**降低 d/Dp → 落入拍打区**(Ø10/d3 脉动 310%)。要更大坑径
+  (更高阻力)必须**按比例加深**以保持 d/Dp≥0.75。
+
+**选取建议**:
+- 直径 **Dp/D_头 ≈ 0.6–0.7**(Ø8 合适),保留锐利坑口、鼻壁 ≥1.5–2mm;
+- 深度 **d/Dp ≈ 0.75–1.0 → Ø8 对应 d≈6–8mm**(**不是 2mm**,2mm 恰在最糟的拍打区)。
+
+> 注意:2D 平面会**高估**空腔脉动幅值(真实轴对称环涡更稳),绝对 % 偏大,但 d/Dp 主导
+> 规律与转变位置可靠;深腔的粘度免疫(β)建议在 d≈6mm 再复核一次。
+
 ## 运行
 
 ```bash
@@ -112,4 +138,7 @@ python3 float_groove_plots.py       # -> float_groove_cfd.png + float_groove_acc
 # A/B/C:钝头前向凹坑(杯)vs 钝 vs 圆(约 20 min 后台)+ 出图
 python3 float_cup_study.py          # -> cup_study.npz
 python3 float_cup_plots.py          # -> float_cup_cfd.png + float_cup_accuracy.png
+# 凹坑尺寸扫描(深度/直径,约 20 min 后台)+ 出图
+python3 float_cavity_opt.py         # -> cavity_opt.npz
+python3 float_cavity_opt_plot.py    # -> float_cavity_opt.png
 ```
