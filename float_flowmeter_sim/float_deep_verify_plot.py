@@ -38,8 +38,11 @@ for lab, b in ref.items():
 axA.set_xscale("log")
 axA.set_xlabel("浮子雷诺数 Re", fontproperties=zh)
 axA.set_ylabel("Cd / Cd∞ (归一化)", fontproperties=zh)
-axA.set_title("(A) 粘度免疫:Cd 随 Re 的平坦度(越平越好)", fontproperties=zh, fontsize=11.5)
-axA.grid(True, which="both", alpha=0.3); axA.legend(prop=zh, fontsize=8.5)
+axA.set_title("(A) 粘度免疫(越平越好):深腔并未更平", fontproperties=zh, fontsize=11.5)
+axA.text(0.04, 0.05, "⚠ β 不稳:同一 Ø8×2 凹坑\nLh5→1.69, Lh8→4.60\n2D 时均测 β 不可靠",
+         transform=axA.transAxes, fontproperties=zh, fontsize=8,
+         bbox=dict(boxstyle="round", fc="#fff3cd", alpha=0.9))
+axA.grid(True, which="both", alpha=0.3); axA.legend(prop=zh, fontsize=8.5, loc="upper right")
 
 # ---- (B) drag time history ----
 for k, (lab, col) in CFG.items():
@@ -66,8 +69,8 @@ axC.set_ylabel("归一化幅值", fontproperties=zh)
 axC.set_title("(C) 脉动频谱:浅腔有强峰,深腔平", fontproperties=zh, fontsize=11.5)
 axC.grid(True, alpha=0.3); axC.legend(prop=zh, fontsize=9)
 
-fig.suptitle("深腔(Ø8×深6,d/Dp=0.75)验证:粘度免疫保住 + 脉动大幅降低",
-             fontproperties=zh, fontsize=13.5, fontweight="bold")
+fig.suptitle("深腔(Ø8×深6,d/Dp=0.75)验证:脉动大幅降低 ✓;但粘度免疫(β)未改善且测量不稳 ⚠",
+             fontproperties=zh, fontsize=13, fontweight="bold")
 fig.tight_layout(rect=[0, 0, 1, 0.94])
 fig.savefig(HERE + "/float_deep_verify.png", dpi=140)
 print("saved float_deep_verify.png")
