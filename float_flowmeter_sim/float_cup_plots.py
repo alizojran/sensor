@@ -20,28 +20,36 @@ NAMES = {"cup": "钝头+前向凹坑(杯)", "blunt": "钝头(无坑)", "rounded"
 ORDER = ["cup", "blunt", "rounded"]
 COL = {"cup": "tab:green", "blunt": "tab:orange", "rounded": "tab:red"}
 
-# ============================ Figure 1: flow fields ==================================
-fig1, axes = plt.subplots(3, 1, figsize=(12, 9.6))
-for ax, g in zip(axes, ORDER):
+# ============================ Figure 1: flow fields (full + front zoom) ===============
+fig1, axes = plt.subplots(3, 2, figsize=(13.5, 9.4),
+                          gridspec_kw=dict(width_ratios=[1.9, 1.0]))
+for r, g in enumerate(ORDER):
     ux, uy, ob = D[f"{g}_ux"], D[f"{g}_uy"], D[f"{g}_obst"]
     sp = np.sqrt(ux ** 2 + uy ** 2).T / uLB
     sp[ob.T] = np.nan
     ux2, uy2 = ux.T.copy(), uy.T.copy(); ux2[ob.T] = 0; uy2[ob.T] = 0
-    pc = ax.pcolormesh(x_mm, y_mm, np.ma.masked_invalid(sp), cmap="turbo",
-                       shading="auto", vmin=0, vmax=4.0)
-    ax.streamplot(x_mm, y_mm, ux2, uy2, color="0.12", density=1.5, linewidth=0.5,
-                  arrowsize=0.6, broken_streamlines=False)
     rgba = np.zeros((ny, nx, 4)); rgba[ob.T] = [0.32, 0.39, 0.5, 1]
-    ax.imshow(rgba, origin="lower", extent=[x_mm[0], x_mm[-1], y_mm[0], y_mm[-1]],
-              aspect="equal", zorder=5)
-    fig1.colorbar(pc, ax=ax, pad=0.01, fraction=0.02).set_label("|u|/U_in", fontproperties=zh)
-    ax.set_title(NAMES[g], fontproperties=zh, fontsize=12)
-    ax.set_ylabel("r [mm]", fontproperties=zh)
-    ax.set_xlim(-8, 30); ax.set_ylim(y_mm[0], y_mm[-1])
-axes[0].annotate("坑内驻涡", (1.5, 0), (-6, 9), fontproperties=zh, color="w", fontsize=10,
-                 arrowprops=dict(arrowstyle="->", color="w"))
-axes[-1].set_xlabel("x [mm] (流动 →)", fontproperties=zh)
-fig1.suptitle("CFD 流场对比(LBM, Re≈%.0f):杯 / 钝 / 圆 头" % float(D["Re_field"]),
+    for c, (xlim, dens) in enumerate([((-8, 30), 1.5), ((-3.5, 8), 3.2)]):
+        ax = axes[r, c]
+        pc = ax.pcolormesh(x_mm, y_mm, np.ma.masked_invalid(sp), cmap="turbo",
+                           shading="auto", vmin=0, vmax=4.0)
+        ax.streamplot(x_mm, y_mm, ux2, uy2, color="0.1", density=dens, linewidth=0.5,
+                      arrowsize=0.6, broken_streamlines=False)
+        ax.imshow(rgba, origin="lower", extent=[x_mm[0], x_mm[-1], y_mm[0], y_mm[-1]],
+                  aspect="equal", zorder=5)
+        ax.set_xlim(*xlim); ax.set_ylim(y_mm[0], y_mm[-1])
+        ax.set_ylabel("r [mm]", fontproperties=zh)
+    axes[r, 0].set_title(NAMES[g], fontproperties=zh, fontsize=12)
+    axes[r, 1].set_title("前端放大", fontproperties=zh, fontsize=11)
+axes[0, 1].annotate("坑内驻涡\n(分离钉在杯口)", (1.0, 0), (3.0, 6.5), fontproperties=zh,
+                    color="w", fontsize=9.5, arrowprops=dict(arrowstyle="->", color="w"))
+axes[1, 1].annotate("平钝面", (0.2, 0), (3, 6.5), fontproperties=zh, color="w", fontsize=9.5,
+                    arrowprops=dict(arrowstyle="->", color="w"))
+axes[2, 1].annotate("圆滑附着", (1.5, 3), (3.5, 7), fontproperties=zh, color="w", fontsize=9.5,
+                    arrowprops=dict(arrowstyle="->", color="w"))
+for c in (0, 1):
+    axes[2, c].set_xlabel("x [mm] (流动 →)", fontproperties=zh)
+fig1.suptitle("CFD 流场对比(LBM, Re≈%.0f,时均):杯 / 钝 / 圆 头" % float(D["Re_field"]),
               fontproperties=zh, fontsize=14, fontweight="bold")
 fig1.tight_layout(rect=[0, 0, 1, 0.97])
 fig1.savefig(HERE + "/float_cup_cfd.png", dpi=140)
