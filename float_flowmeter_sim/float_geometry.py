@@ -30,6 +30,11 @@ Z_IN = 10.0      # inlet run before nose
 Z_WAKE = 30.0    # wake after tail
 LZ = Z_IN + Ltot + Z_WAKE     # total domain length = 70 mm
 
+# --- redesigned float: blunt face Ø12 + short metering land + streamlined cone tail ---
+LAND_RD = 3.0    # cylindrical metering land length
+LTOT_RD = 26.0   # redesigned float total length
+RTAIL_RD = 1.5   # redesigned tail tip radius (Ø3)
+
 
 def profile_radius(zb, variant):
     """Body radius vs local axial coord zb (array), 0 outside [0,Ltot]."""
@@ -51,6 +56,13 @@ def solid_mask(z_c, r_c, variant, depth=None):
     """
     Z, Rg = np.meshgrid(z_c, r_c, indexing="ij")
     zb = Z - Z_IN
+    if variant == "redesign":
+        Ro = np.zeros_like(zb)
+        head = (zb >= 0) & (zb < LAND_RD)
+        tail = (zb >= LAND_RD) & (zb <= LTOT_RD)
+        Ro[head] = R
+        Ro[tail] = R - (R - RTAIL_RD) * (zb[tail] - LAND_RD) / (LTOT_RD - LAND_RD)
+        return (zb >= 0) & (zb <= LTOT_RD) & (Rg <= Ro)
     Ro = profile_radius(zb, "rounded" if variant == "rounded" else "blunt")
     env = (zb >= 0) & (zb <= Ltot) & (Rg <= Ro)
     if variant in ("cup6", "cup2"):
